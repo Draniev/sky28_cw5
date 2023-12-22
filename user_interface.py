@@ -26,6 +26,7 @@ class UserInterface:
         self.sj_api = SJVacancyAPI(SJ_API_KEY)
         self.apies: list[VacancyApi] = []
         self.vacancies: list[Vacancy] = []
+        self.print_qty: int = 10  # количество объектов на печать
 
     def start(self):
         is_exit = False
@@ -38,39 +39,32 @@ class UserInterface:
     def __hello_ui(self) -> bool:
 
         match self.__state:
-
             case UIState.IDLE:
-                print('(1) Поработать с локальными файлами '
-                      '\n(2) найти новые вакансии, '
-                      '\n(9, exit) выйти?')
-                user_input = input('Выберите действие: 1, 2 или 9 >> ')
-                is_exit = self.__parse_idle_input(user_input)
-
+                is_exit = self.__idle_input()
             case UIState.LOAD_FILE:
                 is_exit = True
-
             case UIState.API_SEARCH0:
-                print('Хотите поискать \n(0) на всех доступных платформах,'
-                      '\n(1) на HeadHunter '
-                      '\n(2) на SuperJob, '
-                      '\n(8, back) назад или выйти (9, exit)?')
-                user_input = input('Выберите действие: 0, 1, 2 или 8, 9 >> ')
-                is_exit = self.__parse_search0_input(user_input)
-                # is_exit = True
-
+                is_exit = self.__search0_input()
             case UIState.API_SEARCH1:
                 is_exit = self.__find_vacancy_ui()
-
             case UIState.VACANCY:
                 is_exit = self.__working_with_vacancy()
+            case _:
+                is_exit = True  # В любой не понятной ситуации - досвидули!
 
-        print(self.__state)
-        print(f'is_exit: {is_exit}')
+        # print(self.__state)
+        # print(f'is_exit: {is_exit}')
         return is_exit
 
-    def __parse_idle_input(self, input: str) -> bool:
+    def __idle_input(self) -> bool:
 
-        match input:
+        print('(1) Поработать с локальными файлами '
+              '\n(2) найти новые вакансии, '
+              '\n(9, exit) выйти?')
+
+        user_input = input('Выберите действие: 1, 2 или 9 >> ')
+
+        match user_input:
             case '1':
                 self.__state = UIState.LOAD_FILE
             case '2':
@@ -80,9 +74,16 @@ class UserInterface:
 
         return False
 
-    def __parse_search0_input(self, input: str) -> bool:
+    def __search0_input(self) -> bool:
 
-        match input:
+        print('Поискать \n(0) на HeadHunter '
+              '\n(1) на SuperJob '
+              '\n(2) на всех доступных платформах '
+              '\n(8, back) назад или выйти (9, exit)?')
+
+        user_input = input('Выберите действие: 0, 1, 2 или 8, 9 >> ')
+
+        match user_input:
             case '0':  # Поиск на ХХ
                 self.apies = [self.hh_api]
             case '1':  # Поиск на SJ
@@ -111,7 +112,7 @@ class UserInterface:
                 return True  # Завершение и выход
 
         salary = input('(8, back) назад или выйти (9, exit)\n'
-                       'Примерная зарплата в RUR (0 если не важно)')
+                       'Примерная зарплата в RUR (0 если не важно): ')
 
         match salary:
             case '0':
@@ -138,6 +139,11 @@ class UserInterface:
         return False  # Продолжаем работу в цикле
 
     def __working_with_vacancy(self) -> bool:
+        """
+        Пользовательский интерфейс для работы с сохранённым (загруженным)
+        в памятя списком вакансий. Доступна фильтрация, всякий вывод и пр.
+        При желании тут можно было бы много всего придумать...
+        """
 
         print('(0) Установить кол-во вакансий в выдаче (деф. 10)'
               '\n(1) показать первые N вакансий'
@@ -150,4 +156,45 @@ class UserInterface:
               '\n(s) сохранить текущую подборку в файл'
               '\n(a) сохранить все вакансии в файл'
               '\n(9, exit) выйти?')
-        return True
+        action = input('Выберите действие: 0-6, x, s, a, 9 >> ')
+
+        match action:
+            case '0':  # Установить отображение N на страницу
+                self.__set_print_qty()
+            case '1':  # Напечатать первый N вакансий
+                self.__print_vacancies_page()
+            case '2':
+                pass
+            case '3':
+                pass
+            case '4':
+                pass
+            case '5':
+                pass
+            case '6':
+                pass
+            case 'x':
+                pass
+            case 's':
+                pass
+            case 'a':
+                pass
+            case '9' | 'exit':
+                return True  # Завершение и выход
+
+        return False
+
+    def __set_print_qty(self) -> None:
+        qty = input('Укажите кол-во объектов для вывода на печать: ')
+        try:
+            qty = int(qty)
+            self.print_qty = qty
+        except Exception:
+            print(f'Что-то пошло не так, предыдущее значение '
+                  f'({self.print_qty}) не изменилось')
+
+    def __print_vacancies_page(self, page: int = 0) -> None:
+        print(f'Объекты вакансий с {page * self.print_qty + 1} по '
+              f'{page * self.print_qty + self.print_qty}')
+        for i in range(self.print_qty):
+            print(self.vacancies[page * self.print_qty + i])
