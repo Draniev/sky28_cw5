@@ -3,7 +3,6 @@ from time import sleep
 
 import httpx
 from pydantic import BaseModel, Field
-from rich import print
 
 from currency_rate import CurrencyRate
 from vacancy import Vacancy
@@ -19,7 +18,7 @@ class HHSalary(BaseModel):
 
 class HHVacancy(BaseModel, extra='ignore'):
     name: str
-    alternate_url: str | None
+    alternate_url: str
     area: dict
     created_at: datetime
     salary: HHSalary | None
@@ -81,10 +80,8 @@ class HHVacancyAPI(VacancyApi):
                 # Если переборщить с кол-м запромов то может начать
                 # сыпать ошибки... пропустим их
 
-        # print(hh_vacancies_list)
         vacancies_list = self.__convert_hh_vacancies(hh_vacancies_list)
 
-        print(vacancies_list)
         return vacancies_list
 
     def __convert_hh_vacancies(self,
@@ -106,7 +103,6 @@ class HHVacancyAPI(VacancyApi):
             vacancy = Vacancy(name=name, url=url, description=description,
                               area_name=area_name, salary_from=salary_from,
                               salary_to=salary_to)
-            print(vacancy)
             vacancies.append(vacancy)
 
         return vacancies
