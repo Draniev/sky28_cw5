@@ -1,9 +1,11 @@
 from enum import Enum
 
 from rich import print
+from rich.markdown import Markdown
 
 from hh_vacancyapi import HHVacancyAPI
 from load_env import SJ_API_KEY
+from saveload import JSONSaveLoadVacancies
 from sj_vacancyapi import SJVacancyAPI
 from vacancy import Vacancy
 from vacancyapi import VacancyApi
@@ -27,6 +29,7 @@ class UserInterface:
         self.apies: list[VacancyApi] = []
         self.vacancies: list[Vacancy] = []
         self.print_qty: int = 10  # количество объектов на печать
+        self.loader = JSONSaveLoadVacancies()
 
     def start(self):
         is_exit = False
@@ -42,7 +45,7 @@ class UserInterface:
             case UIState.IDLE:
                 is_exit = self.__idle_input()
             case UIState.LOAD_FILE:
-                is_exit = True
+                is_exit = self.__load_file()
             case UIState.API_SEARCH0:
                 is_exit = self.__search0_input()
             case UIState.API_SEARCH1:
@@ -74,21 +77,70 @@ class UserInterface:
 
         return False
 
+    def __load_file(self) -> bool:
+
+        filename = input('(8, back) назад или выйти (9, exit)\n'
+                         'Имя файла для загрузки. "Enter" - по умолчанию. >> ')
+
+        match filename:
+            case '8' | 'back':  # Возврат на предыдуший шаг
+                self.__state = UIState.IDLE
+                return False
+            case '9' | 'exit':
+                return True  # Завершение и выход
+
+        try:
+            self.vacancies = []
+            if len(filename) == 0:
+                self.vacancies = self.loader.loadfile()
+            else:
+                self.vacancies = self.loader.loadfile(filename)
+
+            print(f'Из файла загружено {len(self.vacancies)} вакансий')
+            self.__state = UIState.VACANCY
+
+        except FileNotFoundError:
+            print('Файл повреждён или не найден. Попробуем еще раз?')
+
+        return False  # Продолжаем работу в цикле
+
+    def __safe_to_file(self, vacancies: list[Vacancy]) -> bool:
+
+        filename = input('(8, back) назад или выйти (9, exit)\n'
+                         'Введите имя файла. "Enter" - по умолчанию. >> ')
+
+        match filename:
+            case '8' | 'back':  # Возврат на предыдуший шаг
+                self.__state = UIState.VACANCY
+                return False
+            case '9' | 'exit':
+                return True  # Завершение и выход
+
+        if len(filename) == 0:
+            self.loader.savefile(vacancies)
+        else:
+            self.loader.savefile(vacancies, f'{filename}.json')
+
+        print(f'Записано в файл {len(self.vacancies)} вакансий')
+        self.__state = UIState.VACANCY
+
+        return False  # Продолжаем работу в цикле
+
     def __search0_input(self) -> bool:
 
-        print('Поискать \n(0) на HeadHunter '
-              '\n(1) на SuperJob '
-              '\n(2) на всех доступных платформах '
+        print('Поискать \n(1) на HeadHunter '
+              '\n(2) на SuperJob '
+              '\n(3) на всех доступных платформах '
               '\n(8, back) назад или выйти (9, exit)?')
 
         user_input = input('Выберите действие: 0, 1, 2 или 8, 9 >> ')
 
         match user_input:
-            case '0':  # Поиск на ХХ
+            case '1':  # Поиск на ХХ
                 self.apies = [self.hh_api]
-            case '1':  # Поиск на SJ
+            case '2':  # Поиск на SJ
                 self.apies = [self.sj_api]
-            case '2':  # Поиск на обоих платформах
+            case '3':  # Поиск на обоих платформах
                 self.apies = [self.hh_api, self.sj_api]
             case '8' | 'back':  # Возврат на предыдуший шаг
                 self.__state = UIState.IDLE
@@ -178,7 +230,7 @@ class UserInterface:
             case 's':
                 pass
             case 'a':
-                pass
+                self.__safe_to_file(self.vacancies)
             case '9' | 'exit':
                 return True  # Завершение и выход
 
@@ -197,4 +249,5 @@ class UserInterface:
         print(f'Объекты вакансий с {page * self.print_qty + 1} по '
               f'{page * self.print_qty + self.print_qty}')
         for i in range(self.print_qty):
-            print(self.vacancies[page * self.print_qty + i])
+            md = Markdown(self.vacancies[page * self.print_qty + i].__str__())
+            print(md)
