@@ -57,8 +57,6 @@ class HHVacancyAPI(VacancyApi):
         vacancies_list: list[Vacancy] = []
         hh_vacancies_list: list[HHVacancy] = []
 
-        response = httpx.get(f'{self.base_url}/vacancies', params=params)
-
         next_page = True
         while next_page:
 
@@ -107,7 +105,8 @@ class HHVacancyAPI(VacancyApi):
 
         return vacancies
 
-    def __get_salary_in_rur(self, salary: HHSalary) -> tuple[int | None, int | None]:
+    def __get_salary_in_rur(self,
+                            salary: HHSalary) -> tuple[int | None, int | None]:
 
         if salary.currency == 'RUR':
             salary_from = salary.cur_from
