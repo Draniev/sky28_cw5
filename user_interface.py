@@ -105,15 +105,12 @@ class UserInterface:
 
     def __safe_to_file(self, vacancies: list[Vacancy]) -> bool:
 
-        filename = input('(8, back) назад или выйти (9, exit)\n'
+        filename = input('(8, back) назад\n'
                          'Введите имя файла. "Enter" - по умолчанию. >> ')
 
         match filename:
             case '8' | 'back':  # Возврат на предыдуший шаг
-                self.__state = UIState.VACANCY
                 return False
-            case '9' | 'exit':
-                return True  # Завершение и выход
 
         if len(filename) == 0:
             self.loader.savefile(vacancies)
@@ -121,7 +118,6 @@ class UserInterface:
             self.loader.savefile(vacancies, f'{filename}.json')
 
         print(f'Записано в файл {len(self.vacancies)} вакансий')
-        self.__state = UIState.VACANCY
 
         return False  # Продолжаем работу в цикле
 
@@ -202,7 +198,7 @@ class UserInterface:
               '\n(3) отсортировать по з/п по увеличению'
               '\n(4) отобрать вакансии по городу'
               '\n(5) отобрать вакансии по ключевому слову'
-              '\n(6) отобрать вакансии по зарплате'
+              '\n(6) удалить вакансии без указания з/n'
               '\n(x) сбросить текущие фильтры'
               '\n(s) сохранить текущую подборку в файл'
               '\n(a) сохранить все вакансии в файл'
@@ -219,7 +215,7 @@ class UserInterface:
             case '3':  # Отсортировать по увеличению
                 self.__sort_by_salary()
             case '4':
-                pass
+                self.__filter_city()
             case '5':
                 pass
             case '6':
@@ -265,3 +261,19 @@ class UserInterface:
 
     def __sort_by_salary(self, reverse=False):
         self.vacancies.sort(reverse=reverse)
+
+    def __filter_city(self) -> bool:
+
+        city = input('(8, back) назад\n'
+                     'Введите город для выбоорки >> ')
+
+        match city:
+            case '8' | 'back':  # Возврат на предыдуший шаг
+                return False
+            case _:
+                pass
+        
+        filtered = filter(lambda x: x.area_name == city, self.vacancies)
+        self.vacancies = list(filtered)
+
+        return False  # Продолжаем работу в цикле
