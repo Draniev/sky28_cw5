@@ -22,7 +22,7 @@ class HHVacancy(BaseModel, extra='ignore'):
     area: dict
     created_at: datetime
     salary: HHSalary | None
-    description: str | None = None
+    snippet: dict
 
 
 class HHResponse(BaseModel, extra='ignore'):
@@ -89,7 +89,7 @@ class HHVacancyAPI(VacancyApi):
         for hh_vac in hh_vacancies:
             name = hh_vac.name
             url = hh_vac.alternate_url
-            description = hh_vac.description
+            description = hh_vac.snippet['responsibility']
             area_name = hh_vac.area.get('name')
             if hh_vac.salary:
                 salary_from, salary_to = self.__get_salary_in_rur(

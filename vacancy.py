@@ -95,18 +95,22 @@ class Vacancy(BaseModel, extra='ignore'):
         if self.salary_to and self.salary_from:
             str = (f'\n[bold]{self.name}[/bold]: {self.url}'
                    f'\nв городe {self.area_name}.'
+                   f'\n{self.description}'
                    f'\nЗарплата [bold]от {self.salary_from} до {self.salary_to}[/bold] руб.')
         elif self.salary_to:
             str = (f'\n[bold]{self.name}[/bold]: {self.url}'
                    f'\nв городe {self.area_name}.'
+                   f'\n{self.description}'
                    f'\nЗарплата [bold]до {self.salary_to}[/bold] руб.')
         elif self.salary_from:
             str = (f'\n[bold]{self.name}[/bold]: {self.url}'
                    f'\nв городe {self.area_name}.'
+                   f'\n{self.description}'
                    f'\nЗарплата [bold]от {self.salary_from}[/bold] руб.')
         else:
             str = (f'\n[bold]{self.name}[/bold]: {self.url}'
                    f'\nв городe {self.area_name}.'
+                   f'\n{self.description}'
                    f'\nЗарплата не указана!')
 
         return str
