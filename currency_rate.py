@@ -20,4 +20,4 @@ class CurrencyRate:
             self.currency_rate[code] = value / nominal
 
     def conv_to_rur(self, value: float | int, currency: str) -> float:
-        return float(value) * self.currency_rate[currency]
+        return float(value) * self.currency_rate[currency.upper()]
