@@ -1,7 +1,6 @@
 from enum import Enum
 
 from rich import print
-from rich.markdown import Markdown
 
 from hh_vacancyapi import HHVacancyAPI
 from load_env import SJ_API_KEY
@@ -199,8 +198,8 @@ class UserInterface:
 
         print('(0) Установить кол-во вакансий в выдаче (деф. 10)'
               '\n(1) показать первые N вакансий'
-              '\n(2) отсортировать по мин.з/п по уменьшению'
-              '\n(3) отсортировать по мин.з/п по увеличению'
+              '\n(2) отсортировать по з/п по уменьшению'
+              '\n(3) отсортировать по з/п по увеличению'
               '\n(4) отобрать вакансии по городу'
               '\n(5) отобрать вакансии по ключевому слову'
               '\n(6) отобрать вакансии по зарплате'
@@ -214,11 +213,11 @@ class UserInterface:
             case '0':  # Установить отображение N на страницу
                 self.__set_print_qty()
             case '1':  # Напечатать первый N вакансий
-                self.__print_vacancies_page()
-            case '2':
-                pass
-            case '3':
-                pass
+                self.__print_per_page()
+            case '2':  # Отсортировать по уменьшинию
+                self.__sort_by_salary(True)
+            case '3':  # Отсортировать по увеличению
+                self.__sort_by_salary()
             case '4':
                 pass
             case '5':
@@ -249,5 +248,20 @@ class UserInterface:
         print(f'Объекты вакансий с {page * self.print_qty + 1} по '
               f'{page * self.print_qty + self.print_qty}')
         for i in range(self.print_qty):
-            md = Markdown(self.vacancies[page * self.print_qty + i].__str__())
-            print(md)
+            print(self.vacancies[page * self.print_qty + i].__str__())
+        print('\n[bold]#################[/bold]')
+
+    def __print_per_page(self) -> None:
+        # Тут мне очень лень возиться с возможной "последней"
+        # страницей, которая может оказаться не полной, так
+        # что позволю себе от неё избавиться. Тем более в задаче
+        # подобного вообще не было.
+        pages = len(self.vacancies) // self.print_qty
+        for i in range(pages):
+            self.__print_vacancies_page(i)
+            is_next = input('Enter -> дальше, Any simbol -> стоп >> ')
+            if len(is_next) != 0:
+                break
+
+    def __sort_by_salary(self, reverse=False):
+        self.vacancies.sort(reverse=reverse)
