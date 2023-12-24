@@ -198,7 +198,7 @@ class UserInterface:
               '\n(3) отсортировать по з/п по увеличению'
               '\n(4) отобрать вакансии по городу'
               '\n(5) отобрать вакансии по ключевому слову'
-              '\n(a) сохранить вакансии в файл'
+              '\n(s) сохранить вакансии в файл'
               '\n(9, exit) выйти?')
         action = input('Выберите действие: 0-6, x, s, a, 9 >> ')
 
@@ -214,14 +214,8 @@ class UserInterface:
             case '4':
                 self.__filter_city()
             case '5':
-                pass
-            case '6':
-                pass
-            case 'x':
-                pass
+                self.__filter_word()
             case 's':
-                pass
-            case 'a':
                 self.__safe_to_file(self.vacancies)
             case '9' | 'exit':
                 return True  # Завершение и выход
@@ -256,7 +250,7 @@ class UserInterface:
             if len(is_next) != 0:
                 break
 
-    def __sort_by_salary(self, reverse=False):
+    def __sort_by_salary(self, reverse=False) -> None:
         self.vacancies.sort(reverse=reverse)
 
     def __filter_city(self) -> bool:
@@ -269,8 +263,28 @@ class UserInterface:
                 return False
             case _:
                 pass
-        
+
         filtered = filter(lambda x: x.area_name == city, self.vacancies)
         self.vacancies = list(filtered)
 
-        return False  # Продолжаем работу в цикле
+        return True  # Продолжаем работу в цикле
+
+    def __filter_word(self) -> bool:
+
+        key = input('(8, back) назад\n'
+                    'Введите ключ для фильтрации выборки >> ')
+
+        match key:
+            case '8' | 'back':  # Возврат на предыдуший шаг
+                return False
+            case _:
+                pass
+
+        filtered = filter(lambda x: key in (x.name,
+                                            x.description,
+                                            x.area_name,
+                                            ),
+                          self.vacancies)
+        self.vacancies = list(filtered)
+
+        return True  # Продолжаем работу в цикле
