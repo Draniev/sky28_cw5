@@ -1,13 +1,16 @@
 from pydantic import BaseModel
+from app.api import Employer
 
 
 class Vacancy(BaseModel, extra='ignore'):
+    vacancy_id: int
+    vacancy_hh_id: int
     name: str
     url: str
+    employer: Employer
     description: str | None = None
     salary_from: int | None = None
     salary_to: int | None = None
-    # currency: str | None = None
     area_name: str | None = None  # Moсква
 
     def __eq__(self, __value: object) -> bool:

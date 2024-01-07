@@ -23,12 +23,12 @@ class UserInterface:
 
     def __init__(self):
         self.__state = UIState.IDLE
-        self.hh_api = HHVacancyAPI()
-        # self.sj_api = SJVacancyAPI(SJ_API_KEY)
         self.apies: list[VacancyApi] = []
         self.vacancies: list[Vacancy] = []  # Локальная выборка для работы
         self.print_qty: int = 10  # количество объектов на печать
 
+        self.hh_api = HHVacancyAPI()
+        # self.sj_api = SJVacancyAPI(SJ_API_KEY)
         self.apies.append(self.hh_api)
 
     def start(self):
