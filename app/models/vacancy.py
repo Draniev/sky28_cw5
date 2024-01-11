@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from app.api import Employer
+from app.models.employer import Employer
 
 
 class Vacancy(BaseModel, extra='ignore'):
@@ -12,6 +12,20 @@ class Vacancy(BaseModel, extra='ignore'):
     salary_from: int | None = None
     salary_to: int | None = None
     area_name: str | None = None  # Moсква
+
+    __annotations__ = {
+        "__root__": {
+            "vacancy_id": int,
+            "vacancy_hh_id": int,
+            "name": str,
+            "url": str,
+            "employer": Employer,
+            "description": str | None,
+            "salary_from": int | None,
+            "salary_to": int | None,
+            "area_name": str | None,
+        }
+    }
 
     def __eq__(self, __value: object) -> bool:
         if isinstance(__value, Vacancy):
