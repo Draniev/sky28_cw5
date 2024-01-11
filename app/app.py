@@ -1,5 +1,5 @@
 from art import tprint
-from user_interface import UserInterface
+from app.ui.user_interface import UserInterface
 
 
 def main():
