@@ -1,21 +1,17 @@
 from enum import Enum
 
 from rich import print
-from saveload import JSONSaveLoadVacancies
 
-from hh_vacancyapi import HHVacancyAPI
-from load_env import SJ_API_KEY
-from sj_vacancyapi import SJVacancyAPI
-from vacancy import Vacancy
-from vacancyapi import VacancyApi
+from app.api.hh_vacancyapi import HHVacancyAPI
+from app.api.vacancyapi import VacancyApi
+from app.load_env import DB_USER, DB_NAME, DB_PASS
+from app.models.vacancy import Vacancy
 
 
 class UIState(Enum):
     IDLE = 'Ожидаем начала работы'
-    LOAD = 'Работа с БД'
+    BD_LOAD = 'Работа с БД'
     API_SEARCH0 = 'Добавить работодателя в БД'
-    API_SEARCH1 = 'Загружаем критерии поиска вакансий'
-    # VACANCY = 'Режим работы с загруженными вакансиями'
     EXIT = 'Выключаемся'
 
 
@@ -28,7 +24,6 @@ class UserInterface:
         self.print_qty: int = 10  # количество объектов на печать
 
         self.hh_api = HHVacancyAPI()
-        # self.sj_api = SJVacancyAPI(SJ_API_KEY)
         self.apies.append(self.hh_api)
 
     def start(self):
@@ -44,12 +39,12 @@ class UserInterface:
         match self.__state:
             case UIState.IDLE:
                 is_exit = self.__idle_input()
-            case UIState.LOAD:
+            case UIState.BD_LOAD:
                 is_exit = self.__working_with_vacancy()
             case UIState.API_SEARCH0:
-                is_exit = self.__search0_input()
-            case UIState.API_SEARCH1:
                 is_exit = self.__add_employee_do_db()
+            # case UIState.API_SEARCH1:
+            #     is_exit = self.__add_employee_do_db()
             # case UIState.VACANCY:
             #     is_exit = self.__working_with_vacancy()
             case _:
@@ -69,7 +64,7 @@ class UserInterface:
 
         match user_input:
             case '1':
-                self.__state = UIState.LOAD
+                self.__state = UIState.BD_LOAD
             case '2':
                 self.__state = UIState.API_SEARCH0
             case '9' | 'exit':
@@ -80,7 +75,7 @@ class UserInterface:
     def __add_employee_do_db(self) -> bool:
 
         keyword = input('(8, back) назад или выйти (9, exit)\n'
-                        'Название работодателя для парсинга')
+                        'Название работодателя для парсинга >>  ')
 
         match keyword:
             case '8' | 'back':  # Возврат на предыдуший шаг
@@ -92,13 +87,12 @@ class UserInterface:
         self.vacancies = []
         for api in self.apies:
             print(f'Начинаем парсинг {api} '
-                  f'для вакансий по ключу "{keyword.upper()}"')
+                  f'для поиска вакансий от "{keyword.upper()}"')
+            print('тут типа функция которая пойдет в АПИ и положет в ДБ')
             # vacancies = api.get_vacancy(keyword, salary)
-            print(f'Найдено {len(vacancies)} с помощью {api}')
-            self.vacancies.extend(vacancies)
+            # print(f'Найдено {len(vacancies)} с помощью {api}')
+            # self.vacancies.extend(vacancies)
 
-        print(f'Используя {len(self.apies)} апи '
-              f'получено {len(self.vacancies)} вакансий')
         self.__state = UIState.IDLE
         return False  # Продолжаем работу в цикле
 
@@ -116,8 +110,9 @@ class UserInterface:
               '\n(4) отобрать вакансии по городу'
               '\n(5) отобрать вакансии по ключевому слову'
               '\n(s) сохранить вакансии в файл'
+              '\n(8, back) назад'
               '\n(9, exit) выйти?')
-        action = input('Выберите действие: 0-6, x, s, a, 9 >> ')
+        action = input('Выберите действие: 0-6, 8, 9 >> ')
 
         match action:
             case '0':  # Установить отображение N на страницу
@@ -132,6 +127,9 @@ class UserInterface:
                 self.__filter_city()
             case '5':
                 self.__filter_word()
+            case '8' | 'back':  # Возврат на предыдуший шаг
+                self.__state = UIState.IDLE
+                return False
             case '9' | 'exit':
                 return True  # Завершение и выход
 
