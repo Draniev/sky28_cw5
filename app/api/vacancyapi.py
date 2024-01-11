@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from vacancy import Vacancy
+from app.models.vacancy import Vacancy
 
 
 class VacancyApi(ABC):

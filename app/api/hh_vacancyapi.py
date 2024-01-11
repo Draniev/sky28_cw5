@@ -4,9 +4,10 @@ from time import sleep
 import httpx
 from pydantic import BaseModel, Field
 
-from currency_rate import CurrencyRate
-from vacancy import Vacancy
-from vacancyapi import VacancyApi
+from app.api.currency_rate import CurrencyRate
+from app.models.employer import Employer
+from app.models.vacancy import Vacancy
+from app.api.vacancyapi import VacancyApi
 
 
 class HHSalary(BaseModel):
@@ -23,6 +24,7 @@ class HHVacancy(BaseModel, extra='ignore'):
     created_at: datetime
     salary: HHSalary | None
     snippet: dict
+    employer: Employer
 
 
 class HHResponse(BaseModel, extra='ignore'):
