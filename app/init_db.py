@@ -19,22 +19,13 @@ def main():
             conn.close()
 
 
-# def create_database(params, db_name) -> None:
-#     """Создает новую базу данных."""
-#     conn = psycopg2.connect(**params)
-#     conn.autocommit = True
-#     cur = conn.cursor()
-#     cur.execute(f'CREATE DATABASE {db_name};')
-#     conn.close()
-
-
 def create_tables(cur) -> None:
-    cur.execute('CREATE TABLE employees('
-                'employer_id SERIAL PRIMARY KEY, '
-                'employer_hh_id INT NOT NULL, '
+    cur.execute('CREATE TABLE employers('
+                # 'employer_id SERIAL PRIMARY KEY, '
+                'employer_id INT PRIMARY KEY, '
                 'name VARCHAR(255) NOT NULL, '
                 'url VARCHAR(255) NOT NULL, '
-                'description VARCHAR(255) '
+                'description TEXT'
                 ');')
 
     cur.execute('CREATE TABLE vacancies('
@@ -46,7 +37,7 @@ def create_tables(cur) -> None:
                 'salary_from INT, '
                 'salary_to INT, '
                 'area_name VARCHAR(255), '
-                'employer_id INT REFERENCES employees(employer_id) '
+                'employer_id INT REFERENCES employers(employer_id) '
                 ');')
 
 

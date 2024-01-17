@@ -9,9 +9,9 @@ def main():
     try:
         with psycopg2.connect(**db_params) as conn:
             with conn.cursor() as cur:
-                cur.execute('DROP TABLE vacancies;')
-                cur.execute('DROP TABLE employers;')
-                print("Таблицы успешно удалены")
+                cur.execute('TRUNCATE TABLE vacancies, employers'
+                            ' RESTART IDENTITY CASCADE;')
+                print("Таблицы успешно очищены")
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
@@ -22,3 +22,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
