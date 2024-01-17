@@ -49,51 +49,71 @@ class DBManager:
             print(e)
             return False
 
-    def add_one(self, model_data: dict):
-        table_name = model_data.pop('table_name')
-
-        # Creating a list of column names and values
-        columns = ', '.join(model_data.keys())
-        value_list = []
-        for _, v in model_data.items():
-            if isinstance(v, str):
-                if "\'" in v:
-                    v = v.replace("\'", "\'\'")
-                value_list.append(f"'{v}'")
-            elif v is None:
-                value_list.append("null")
-            else:
-                value_list.append(str(v))
-        values = ', '.join(value_list)
-
-        # values = ', '.join(
-        #     [f"'{v}'" if isinstance(v, str) else str(v)
-        #         for _, v in model_data.items()])
-
-        # Building the SQL query
-        query = f"INSERT INTO {table_name} ({columns}) VALUES ({
-            values}) RETURNING *"
-
-        # Executing the query and retrieving the result
+    def get_companies_and_vacancies_count(self):
+        """
+        получает список всех компаний
+        и количество вакансий у каждой компании
+        """
+        query = (
+            "SELECT employers.name, COUNT(*) FROM vacancies "
+            "LEFT JOIN employers ON vacancies.employer_id = employers.id "
+            "GROUP BY employers.name; "
+        )
         self.cursor.execute(query)
-        new_obj = self.cursor.fetchone()
+        request = self.cursor.fetchall()
+        return [dict(item) for item in request]
 
-        # Committing the changes to the database
-        self.conn.commit()
-        return new_obj
+    def get_all_vacancies(self):
+        """
+        получает список всех вакансий
+        с указанием названия компании, названия вакансии и зарплаты
+        и ссылки на вакансию
+        """
+        query = (
+            "SELECT employers.name, vacancies.name, salary_from, salary_to, "
+            "vacancies.url FROM vacancies "
+            "LEFT JOIN employers ON vacancies.employer_id = employers.id;"
+        )
+        self.cursor.execute(query)
+        request = self.cursor.fetchall()
+        return [dict(item) for item in request]
 
-    # def get_one_by_id(self, model_cls, obj_id: int):
-    #     query = f"SELECT * FROM {model_cls.__name__} WHERE {
-    #         model_cls.__name__.lower()}_id = %s"
-    #     self.cursor.execute(query, (obj_id,))
-    #     return self.cursor.fetchone()
-    #
-    # def get_one_by_name(self, model_cls, name: str):
-    #     query = f"SELECT * FROM {model_cls.__name__} WHERE name = %s"
-    #     self.cursor.execute(query, (name,))
-    #     return self.cursor.fetchone()
-    #
-    # def get_all(self, model_cls) -> list[BaseModel]:
-    #     query = f"SELECT * FROM {model_cls.__name__}"
-    #     self.cursor.execute(query)
-    #     return self.cursor.fetchall()
+    def get_avg_salary(self) -> int:
+        """
+        получает среднюю зарплату по вакансиям
+        """
+        query = (
+            "SELECT AVG(salary_from) as salary_from, "
+            "AVG(salary_to) as salary_to FROM vacancies;"
+        )
+        self.cursor.execute(query)
+        request = self.cursor.fetchone()
+        avg = (request['salary_from'] + request['salary_to']) / 2
+        return int(avg)
+
+    def get_vacancies_with_higher_salary(self) -> list[Vacancy]:
+        """
+        получает список всех вакансий, у которых
+        зарплата выше средней по всем вакансиям
+        """
+        avg = self.get_avg_salary()
+        query = (
+            "SELECT * FROM vacancies "
+            f"WHERE salary_from > {avg}"
+        )
+        self.cursor.execute(query)
+        request = self.cursor.fetchall()
+        return [Vacancy(**item) for item in request]
+
+    def get_vacancies_with_keyword(self, keyword: str) -> list[Vacancy]:
+        """
+        получает список всех вакансий, в названии которых
+        содержатся переданные в метод слова
+        """
+        query = (
+            "SELECT * FROM vacancies "
+            f"WHERE name LIKE '%{keyword}%'"
+        )
+        self.cursor.execute(query)
+        request = self.cursor.fetchall()
+        return [Vacancy(**item) for item in request]

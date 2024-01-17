@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Any
 
 from rich import print
 
@@ -120,7 +121,7 @@ class UserInterface:
         При желании тут можно было бы много всего придумать...
         """
 
-        print('(0) Установить кол-во вакансий в выдаче (деф. 10)'
+        print('\n(0) Установить кол-во вакансий в выдаче (деф. 10)'
               '\n(1) список всех компаний и кол-во вакансий по ним'
               '\n(2) список всех вакансий включая назв. компании, ссылку, з/п'
               '\n(3) средняя зарплата по загруженным вакансиям'
@@ -152,18 +153,23 @@ class UserInterface:
         return False
 
     def __print_all_companies(self):
-        print('Вот список всех компаний и кол-ва вакансий по ним: ')
-        # companies = db.get_companies_and_vacancies_count()
-        # print(companies)
+        print('\nВот список всех компаний и кол-ва вакансий по ним:')
+        companies = db.get_companies_and_vacancies_count()
+        print(companies)
 
     def __print_all_vacancies(self):
-        print('Вот постраничный список всех вакансий: ')
+        print('\n[bold]Вот постраничный список всех вакансий:[/bold] ')
+        vacancy_dict = db.get_all_vacancies()
+        self.__print_per_page(vacancy_dict)
 
     def __print_avg_salary(self):
-        print('Средняя зарплата по загруженным вакансиям: ...')
+        average = db.get_avg_salary()
+        print(f'\n[bold]Средняя зарплата по загруженным вакансиям:[/bold] {average}')
 
     def __print_vac_w_salary_qt_avg(self):
-        print('Постраничный спосок вакансий с з/п выше средней')
+        print('\n[bold]Постраничный спосок вакансий с з/п выше средней[/bold]')
+        vacancies = db.get_vacancies_with_higher_salary()
+        self.__print_per_page(vacancies)
 
     def __find_vacancy_by_word(self) -> bool:
 
@@ -176,12 +182,9 @@ class UserInterface:
             case _:
                 pass
 
-        filtered = filter(lambda x: key in (x.name,
-                                            x.description,
-                                            x.area_name,
-                                            ),
-                          self.vacancies)
-        self.vacancies = list(filtered)
+        vacancies = db.get_vacancies_with_keyword(key)
+        print('[bold]Вот постраничный список запрошенных вакансий:[/bold] ')
+        self.__print_per_page(vacancies)
 
         return True  # Продолжаем работу в цикле
 
@@ -194,22 +197,21 @@ class UserInterface:
             print(f'Что-то пошло не так, предыдущее значение '
                   f'({self.print_qty}) не изменилось')
 
-    def __print_vacancies_page(self, page: int = 0) -> None:
+    def __print_page_num_i(self, data: list[Any], page: int = 0) -> None:
         print(f'Объекты вакансий с {page * self.print_qty + 1} по '
               f'{page * self.print_qty + self.print_qty}')
         for i in range(self.print_qty):
-            print(self.vacancies[page * self.print_qty + i].__str__())
-        print('\n[bold]#################[/bold]')
+            print(data[page * self.print_qty + i].__str__())
+        print('\n')
 
-    def __print_per_page(self) -> None:
+    def __print_per_page(self, data: list[Any]) -> None:
         # Тут мне очень лень возиться с возможной "последней"
         # страницей, которая может оказаться не полной, так
         # что позволю себе от неё избавиться. Тем более в задаче
         # подобного вообще не было.
-        pages = len(self.vacancies) // self.print_qty
+        pages = len(data) // self.print_qty
         for i in range(pages):
-            self.__print_vacancies_page(i)
+            self.__print_page_num_i(data=data, page=i)
             is_next = input('Enter -> дальше, Any simbol -> стоп >> ')
             if len(is_next) != 0:
                 break
-
