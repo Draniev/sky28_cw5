@@ -2,6 +2,8 @@ import os
 
 from dotenv import load_dotenv
 
+from app.service.db_manager import DBManager
+
 is_load = load_dotenv()
 if not is_load:
     print('Загрузить переменные среды не вышло!')
@@ -22,3 +24,5 @@ db_params = {
     'user': DB_USER,
     'port': 5432,
 }
+
+db = DBManager(**db_params)

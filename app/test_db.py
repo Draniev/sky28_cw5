@@ -14,15 +14,14 @@ employer_data = {
     "name": "ABC Corp",
     "url": "https://www.abccorp.com",
     "description": "A sample employer",
-    "table_name": "employers"
 }
 
-# employer = Employer(**employer_data)
-new_obj = db.add_one(employer_data)
+employer = Employer(**employer_data)
+new_obj = db.add_one_new(employer)
 print(new_obj)
-if new_obj:
-    employer = Employer(**new_obj)
-    print(employer)
+# if new_obj:
+#     employer = Employer(**new_obj)
+#     print(employer)
 
 # if new_obj:
 #     employer = Employer(

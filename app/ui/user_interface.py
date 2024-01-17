@@ -3,9 +3,10 @@ from enum import Enum
 from rich import print
 
 from app.api.hh_vacancyapi import HHVacancyAPI
-from app.api.vacancyapi import VacancyApi
-from app.load_env import DB_USER, DB_NAME, DB_PASS
 from app.models.vacancy import Vacancy
+from app.models.employer import Employer
+
+from app.load_env import db
 
 
 class UIState(Enum):
@@ -19,12 +20,10 @@ class UserInterface:
 
     def __init__(self):
         self.__state = UIState.IDLE
-        self.apies: list[VacancyApi] = []
         self.vacancies: list[Vacancy] = []  # Локальная выборка для работы
         self.print_qty: int = 10  # количество объектов на печать
 
         self.hh_api = HHVacancyAPI()
-        self.apies.append(self.hh_api)
 
     def start(self):
         is_exit = False
@@ -43,21 +42,15 @@ class UserInterface:
                 is_exit = self.__working_with_vacancy()
             case UIState.API_SEARCH0:
                 is_exit = self.__add_employee_do_db()
-            # case UIState.API_SEARCH1:
-            #     is_exit = self.__add_employee_do_db()
-            # case UIState.VACANCY:
-            #     is_exit = self.__working_with_vacancy()
             case _:
                 is_exit = True  # В любой не понятной ситуации - досвидули!
 
-        # print(self.__state)
-        # print(f'is_exit: {is_exit}')
         return is_exit
 
     def __idle_input(self) -> bool:
 
         print('(1) Поработать с БАЗОЙ или '
-              '\n(2) добавить новые компании, '
+              '\n(2) добавить новые компании '
               '\n(9, exit) выйти?')
 
         user_input = input('Выберите действие: 1, 2 или 9 >> ')
@@ -73,6 +66,9 @@ class UserInterface:
         return False
 
     def __add_employee_do_db(self) -> bool:
+        """
+        Ищет работодателей по ключевому слову и добавляет их в базу данных!
+        """
 
         keyword = input('(8, back) назад или выйти (9, exit)\n'
                         'Название работодателя для парсинга >>  ')
@@ -84,14 +80,35 @@ class UserInterface:
             case '9' | 'exit':
                 return True  # Завершение и выход
 
-        self.vacancies = []
-        for api in self.apies:
-            print(f'Начинаем парсинг {api} '
-                  f'для поиска вакансий от "{keyword.upper()}"')
-            print('тут типа функция которая пойдет в АПИ и положет в ДБ')
-            # vacancies = api.get_vacancy(keyword, salary)
-            # print(f'Найдено {len(vacancies)} с помощью {api}')
-            # self.vacancies.extend(vacancies)
+        # Парсим все КОМПАНИИ
+        print(f'Начинаем парсинг {self.hh_api} '
+              f'для поискa "{keyword.upper()}"')
+        employers = self.hh_api.get_employers(keyword)
+        print(f'Найдено {len(employers)} с помощью {self.hh_api}')
+
+        # Добавляем КОМПАНИИ в БД
+        employers_to_db = []
+        for employer in employers:
+            is_add = input(f'{employer.name.upper()} '
+                           'добавляем? (n-нeт, y-да) >> ')
+            match is_add:
+                case 'n' | 'n' | 'нет':
+                    print('ок, пропустили, удалили, забыли')
+                case 'y' | 'Y' | 'да':
+                    employers_to_db.append(employer)
+                    is_added = db.add_one_new(employer)
+                    if is_added:
+                        print(f'Успешно добавлен в БД: {employer.name}')
+                    else:
+                        print(f'Не получилось добавить {employer.name}, ай ай')
+
+        # Парсим вакансии работодателей
+        print('Начинаем парсинг вакансий для найденых работодателей')
+        for employer in employers_to_db:
+            v_list = self.hh_api.get_vacancy(employer_id=employer.id)
+            for vac in v_list:
+                db.add_one_new(vac)
+            print(f'Добавлено {len(v_list)}, вакансий для {employer.name}')
 
         self.__state = UIState.IDLE
         return False  # Продолжаем работу в цикле
@@ -104,12 +121,11 @@ class UserInterface:
         """
 
         print('(0) Установить кол-во вакансий в выдаче (деф. 10)'
-              '\n(1) показать первые N вакансий'
-              '\n(2) отсортировать по з/п по уменьшению'
-              '\n(3) отсортировать по з/п по увеличению'
-              '\n(4) отобрать вакансии по городу'
-              '\n(5) отобрать вакансии по ключевому слову'
-              '\n(s) сохранить вакансии в файл'
+              '\n(1) список всех компаний и кол-во вакансий по ним'
+              '\n(2) список всех вакансий включая назв. компании, ссылку, з/п'
+              '\n(3) средняя зарплата по загруженным вакансиям'
+              '\n(4) все вакансии с з/п выше средней'
+              '\n(5) поиск в названии вакансии по слову'
               '\n(8, back) назад'
               '\n(9, exit) выйти?')
         action = input('Выберите действие: 0-6, 8, 9 >> ')
@@ -118,15 +134,15 @@ class UserInterface:
             case '0':  # Установить отображение N на страницу
                 self.__set_print_qty()
             case '1':  # Напечатать первый N вакансий
-                self.__print_per_page()
+                self.__print_all_companies()
             case '2':  # Отсортировать по уменьшинию
-                self.__sort_by_salary(True)
+                self.__print_all_vacancies()
             case '3':  # Отсортировать по увеличению
-                self.__sort_by_salary()
+                self.__print_avg_salary()
             case '4':
-                self.__filter_city()
+                self.__print_vac_w_salary_qt_avg()
             case '5':
-                self.__filter_word()
+                self.__find_vacancy_by_word()
             case '8' | 'back':  # Возврат на предыдуший шаг
                 self.__state = UIState.IDLE
                 return False
@@ -134,6 +150,40 @@ class UserInterface:
                 return True  # Завершение и выход
 
         return False
+
+    def __print_all_companies(self):
+        print('Вот список всех компаний и кол-ва вакансий по ним: ')
+        # companies = db.get_companies_and_vacancies_count()
+        # print(companies)
+
+    def __print_all_vacancies(self):
+        print('Вот постраничный список всех вакансий: ')
+
+    def __print_avg_salary(self):
+        print('Средняя зарплата по загруженным вакансиям: ...')
+
+    def __print_vac_w_salary_qt_avg(self):
+        print('Постраничный спосок вакансий с з/п выше средней')
+
+    def __find_vacancy_by_word(self) -> bool:
+
+        key = input('(8, back) назад\n'
+                    'Введите ключ для поиска вакансии >> ')
+
+        match key:
+            case '8' | 'back':  # Возврат на предыдуший шаг
+                return False
+            case _:
+                pass
+
+        filtered = filter(lambda x: key in (x.name,
+                                            x.description,
+                                            x.area_name,
+                                            ),
+                          self.vacancies)
+        self.vacancies = list(filtered)
+
+        return True  # Продолжаем работу в цикле
 
     def __set_print_qty(self) -> None:
         qty = input('Укажите кол-во объектов для вывода на печать: ')
@@ -163,41 +213,3 @@ class UserInterface:
             if len(is_next) != 0:
                 break
 
-    def __sort_by_salary(self, reverse=False) -> None:
-        self.vacancies.sort(reverse=reverse)
-
-    def __filter_city(self) -> bool:
-
-        city = input('(8, back) назад\n'
-                     'Введите город для выбоорки >> ')
-
-        match city:
-            case '8' | 'back':  # Возврат на предыдуший шаг
-                return False
-            case _:
-                pass
-
-        filtered = filter(lambda x: x.area_name == city, self.vacancies)
-        self.vacancies = list(filtered)
-
-        return True  # Продолжаем работу в цикле
-
-    def __filter_word(self) -> bool:
-
-        key = input('(8, back) назад\n'
-                    'Введите ключ для фильтрации выборки >> ')
-
-        match key:
-            case '8' | 'back':  # Возврат на предыдуший шаг
-                return False
-            case _:
-                pass
-
-        filtered = filter(lambda x: key in (x.name,
-                                            x.description,
-                                            x.area_name,
-                                            ),
-                          self.vacancies)
-        self.vacancies = list(filtered)
-
-        return True  # Продолжаем работу в цикле

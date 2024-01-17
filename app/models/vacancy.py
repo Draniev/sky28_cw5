@@ -1,31 +1,22 @@
 from pydantic import BaseModel
-from app.models.employer import Employer
 
 
 class Vacancy(BaseModel, extra='ignore'):
-    vacancy_id: int
-    vacancy_hh_id: int
+    id: int
+    # vacancy_hh_id: int
     name: str
     url: str
-    employer: Employer
+    employer_id: int
     description: str | None = None
     salary_from: int | None = None
     salary_to: int | None = None
     area_name: str | None = None  # Moсква
 
-    __annotations__ = {
-        "__root__": {
-            "vacancy_id": int,
-            "vacancy_hh_id": int,
-            "name": str,
-            "url": str,
-            "employer": Employer,
-            "description": str | None,
-            "salary_from": int | None,
-            "salary_to": int | None,
-            "area_name": str | None,
-        }
-    }
+    def __repr__(self) -> str:
+        """
+        Возвращает ИМЯ ТАБЛИЦЫ в БД
+        """
+        return 'vacancies'
 
     def __eq__(self, __value: object) -> bool:
         if isinstance(__value, Vacancy):

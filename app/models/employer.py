@@ -2,18 +2,18 @@ from pydantic import BaseModel
 
 
 class Employer(BaseModel, extra='ignore'):
-    employer_id: int
-    employer_hh_id: int
+    """
+    МОДЕЛЬ из БД для объекта "Работодатель"
+    """
+    id: int
+    # employer_hh_id: int
     name: str
-    url: str
-    description: str
+    url: str | None
+    description: str | None
+    # open_vacancies: int
 
-    __annotations__ = {
-        "__root__": {
-            "employer_id": int,
-            "employer_hh_id": int,
-            "name": str,
-            "url": str,
-            "description": str,
-        }
-    }
+    def __repr__(self) -> str:
+        """
+        Возвращает ИМЯ ТАБЛИЦЫ в БД
+        """
+        return 'employers'

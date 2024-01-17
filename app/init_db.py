@@ -22,22 +22,22 @@ def main():
 def create_tables(cur) -> None:
     cur.execute('CREATE TABLE employers('
                 # 'employer_id SERIAL PRIMARY KEY, '
-                'employer_id INT PRIMARY KEY, '
+                'id INT PRIMARY KEY, '
                 'name VARCHAR(255) NOT NULL, '
                 'url VARCHAR(255) NOT NULL, '
                 'description TEXT'
                 ');')
 
     cur.execute('CREATE TABLE vacancies('
-                'vacancy_id SERIAL PRIMARY KEY, '
-                'vacancy_hh_id INT NOT NULL, '
+                # 'vacancy_id SERIAL PRIMARY KEY, '
+                'id INT PRIMARY KEY, '
                 'name VARCHAR(255) NOT NULL, '
                 'url VARCHAR(255) NOT NULL, '
                 'description VARCHAR(255), '
                 'salary_from INT, '
                 'salary_to INT, '
                 'area_name VARCHAR(255), '
-                'employer_id INT REFERENCES employers(employer_id) '
+                'employer_id INT REFERENCES employers(id) '
                 ');')
 
 
